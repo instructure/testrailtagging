@@ -113,6 +113,7 @@ module TestRailOperations
     priorities      = get_test_rail_priority_codes
     test_cases      = {}
 
+    binding.pry
     puts "Testrail Project ID: #{self.project_id}"
     puts "Testrail Suite   ID: #{self.suite_id}"
     # retrieve test cases
