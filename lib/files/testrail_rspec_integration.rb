@@ -266,19 +266,16 @@ module TestRailRSpecIntegration
   # test run that was aborted early and restarted.
   # In this case we skip tests that already passed or were marked as pending (rspec for skipped)
   def self.filter_rspecs_by_testid(config, test_run_cases)
-    puts "filter_rspecs_by_testid - start"
     # This lambda gets called once for each example
     # Here value is an array of string test case ID's.
     config.filter_run_including test_id: lambda { |id|
-      puts " examining testid: #{id}"
+      id = id.to_i
       # The test id's are integers, and in canvas there is only one ID per test case, NOT an array like Bridge
       in_run = test_run_cases.keys.include?( id )
-      puts "  in_run: #{in_run}"
 
       # Do include if the intersection contains a test id
       if in_run
         test_case = test_run_cases[id]
-        puts "found test case: #{test_case} with status: #{test_case.status}"
 
         if (test_case.status == :passed)
           puts "Skipping test case #{id}, because it has already passed"
@@ -295,7 +292,6 @@ module TestRailRSpecIntegration
         false
       end
     }
-    puts "filter_rspecs_by_testid - end"
   end
 
   # The param is an RSPEC config
@@ -326,7 +322,7 @@ module TestRailRSpecIntegration
         when :bridge
           TestRailRSpecIntegration.filter_rspecs_by_test_run(config, test_run_cases)
         when :canvas
-          TestRailRSpecIntegration.filter_rspecs_by_testid(config, user_id, test_run_cases)
+          TestRailRSpecIntegration.filter_rspecs_by_testid(config, test_run_cases)
         end
       end
 
