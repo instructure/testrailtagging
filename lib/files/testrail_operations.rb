@@ -113,6 +113,8 @@ module TestRailOperations
     priorities      = get_test_rail_priority_codes
     test_cases      = {}
 
+    puts "Testrail Project ID: #{self.project_id}"
+    puts "Testrail Suite   ID: #{self.suite_id}"
     # retrieve test cases
     testcases_url = "get_cases/#{self.project_id}&suite_id=#{self.suite_id}"
     response = trclient.send_get(testcases_url)
