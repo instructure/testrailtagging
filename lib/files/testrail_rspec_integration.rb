@@ -321,7 +321,8 @@ module TestRailRSpecIntegration
         case(product)
         when :bridge
           TestRailRSpecIntegration.filter_rspecs_by_test_run(config, test_run_cases)
-        when :canvas
+          when :canvas
+            puts "AAA"
           TestRailRSpecIntegration.filter_rspecs_by_testid(config, test_run_cases)
         end
       end
