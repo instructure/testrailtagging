@@ -100,7 +100,7 @@ module TestRailOperations
     results
   end
 
-  # Gets a hash of TestCase instances.
+  # Gets all the test cases for a particular test suite.
   # The keys are the numeric(integer) test rail case ID's.
   # The Values are the instance of TestCase.
   # Each TestCase instance corresponds to a test case in test rail.
