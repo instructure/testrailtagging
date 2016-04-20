@@ -296,7 +296,7 @@ module TestRailRSpecIntegration
 
   # The param is an RSPEC config
   # The second param is a symbol for which product to hook into
-  def self.register_rspec_integration(config, product)
+  def self.register_rspec_integration(config, product, add_formatter: true)
     if !ENV["TESTRAIL_RUN_ID"].nil?
       # Runs test cases as found in a test run on testrail
 
@@ -328,7 +328,9 @@ module TestRailRSpecIntegration
 
       config.add_formatter TestRailRSpecIntegration::TestRailPlanFormatter
       TestRailRSpecIntegration::TestRailPlanFormatter.set_product(product)
-      TestRailRSpecIntegration.add_formatter_for(config)
+      if add_formatter
+        TestRailRSpecIntegration.add_formatter_for(config)
+      end
     end
   end
 end
