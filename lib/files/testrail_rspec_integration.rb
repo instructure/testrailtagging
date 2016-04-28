@@ -297,40 +297,38 @@ module TestRailRSpecIntegration
   # The param is an RSPEC config
   # The second param is a symbol for which product to hook into
   def self.register_rspec_integration(config, product, add_formatter: true)
-    if !ENV["TESTRAIL_RUN_ID"].nil?
-      # Runs test cases as found in a test run on testrail
+    # Runs test cases as found in a test run on testrail
 
-      # This will select test examples to run based off of what test rail defines, not what
-      # the file pattern on the command line defines.
-      # That is, this will take a test run (int test rail), and run all the cases defined in it.
+    # This will select test examples to run based off of what test rail defines, not what
+    # the file pattern on the command line defines.
+    # That is, this will take a test run (int test rail), and run all the cases defined in it.
 
-      # First clear any filters passed in from the command line
-      config.inclusion_filter = nil
-      test_run_cases = TestRailOperations.get_test_run_cases(ENV["TESTRAIL_RUN_ID"].to_i)
+    # First clear any filters passed in from the command line
+    config.inclusion_filter = nil
+    test_run_cases = TestRailOperations.get_test_run_cases(ENV["TESTRAIL_RUN_ID"].to_i)
 
-      user_id = nil
-      unless ENV["TESTRAIL_ASSIGNED_TO"].nil?
-        user_json = TestRailOperations.get_test_rail_user_by_email(ENV["TESTRAIL_ASSIGNED_TO"])
-        user_id = user_json["id"]
-        puts "Testrail assigned to: #{user_json}"
+    user_id = nil
+    unless ENV["TESTRAIL_ASSIGNED_TO"].nil?
+      user_json = TestRailOperations.get_test_rail_user_by_email(ENV["TESTRAIL_ASSIGNED_TO"])
+      user_id = user_json["id"]
+      puts "Testrail assigned to: #{user_json}"
+    end
+
+    if user_id
+      TestRailRSpecIntegration.filter_rspecs_by_test_run_and_user(config, user_id, test_run_cases)
+    else
+      case(product)
+      when :bridge
+        TestRailRSpecIntegration.filter_rspecs_by_test_run(config, test_run_cases)
+      when :canvas
+        TestRailRSpecIntegration.filter_rspecs_by_testid(config, test_run_cases)
       end
+    end
 
-      if user_id
-        TestRailRSpecIntegration.filter_rspecs_by_test_run_and_user(config, user_id, test_run_cases)
-      else
-        case(product)
-        when :bridge
-          TestRailRSpecIntegration.filter_rspecs_by_test_run(config, test_run_cases)
-        when :canvas
-          TestRailRSpecIntegration.filter_rspecs_by_testid(config, test_run_cases)
-        end
-      end
-
-      config.add_formatter TestRailRSpecIntegration::TestRailPlanFormatter
-      TestRailRSpecIntegration::TestRailPlanFormatter.set_product(product)
-      if add_formatter
-        TestRailRSpecIntegration.add_formatter_for(config)
-      end
+    config.add_formatter TestRailRSpecIntegration::TestRailPlanFormatter
+    TestRailRSpecIntegration::TestRailPlanFormatter.set_product(product)
+    if add_formatter
+      TestRailRSpecIntegration.add_formatter_for(config)
     end
   end
 end
