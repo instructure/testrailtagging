@@ -227,6 +227,10 @@ module TestRailRSpecIntegration
     # This lambda gets called once for each example
     # Here value is an array of string test case ID's.
     config.filter_run_including testrail_id: lambda { |value|
+      unless value.is_a? Array
+        puts "ERROR! testcase has invalid testrail ID: #{value}. Value should be an array, got: #{value.class}".red
+        return false
+      end
       # The test id's are strings. Convert them to integers to make comparison easier
       test_ids = value.collect { |str| str.to_i }
       # Compute the intersection using the handy &() method
