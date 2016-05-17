@@ -75,7 +75,9 @@ class RSpecParser
                                                               nil,   # title, don't know it yet
                                                               nil,   # priority, don't know it yet
                                                               true,  # automated, of course this is automated
-                                                              nil)   # screen size, don't know it yet
+                                                              nil,   # screen size, don't know it yet
+                                                              true,  # is automatable if it is automated
+                                                              nil)   # no Jira references
         # get the title
         @state = :example_title
       when :skip

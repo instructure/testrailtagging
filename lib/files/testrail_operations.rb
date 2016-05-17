@@ -104,8 +104,6 @@ module TestRailOperations
   # The keys are the numeric(integer) test rail case ID's.
   # The Values are the instance of TestCase.
   # Each TestCase instance corresponds to a test case in test rail.
-  # param - project. The integer ID of the project
-  # param - test_suite. The integer ID of the test suite.
   # return - A hash of TestCase instances
   def self.get_test_rail_cases
     trclient        = get_test_rail_client
@@ -125,13 +123,31 @@ module TestRailOperations
       if priority_description
         priority_code = priority_description[:user_friendly_priority]
         automated = test_case["custom_automated"]
-        tc = TestCase.new(id.to_s, test_case["title"], priority_code, automated, screen_size_description)
+        automatable = test_case["custom_to_be_automated"]
+        references = test_case["refs"]
+        tc = TestCase.new(
+          id.to_s, test_case["title"], priority_code, automated,
+          screen_size_description, automatable, references
+        )
         tc.file = test_case["custom_spec_location"]
         test_cases[id] = tc
       end
     end
 
     test_cases
+  end
+
+  # Updates a testcase that corresponds to the provided
+  # testrail_id. The testcase's reference field will be
+  # linked to the provided Jira ticket, given in the format
+  # of PROJECT-ID (ex. "BR-1000")
+  # param - testrail_id. The integer ID of the testcase
+  # param - reference. The string of the JIRA ticket(s)
+  def self.update_references(testrail_id, reference)
+    puts "id: #{testrail_id} => refs: #{reference}"
+    url = "update_case/#{testrail_id}"
+    data = { "refs" => reference }
+    TestRailOperations.get_test_rail_client.send_post_retry(url, data)
   end
 
   # Gets JSON data about the test runs on testrail for the given project and suite
@@ -281,7 +297,11 @@ module TestRailOperations
       #
 
       permanent_id = r["case_id"].to_i
-      tc = TestCase.new(permanent_id, r["title"], r["priority_id"].to_i, r["custom_automated"], r["custom_screen_size"].to_i)
+      tc = TestCase.new(
+        permanent_id, r["title"], r["priority_id"].to_i,
+        r["custom_automated"], r["custom_screen_size"].to_i,
+        r["custom_to_be_automated"], r["refs"]
+      )
       tc.temp_id = r["id"].to_i
       tc.assigned_to = r["assignedto_id"].to_i
       tc.set_status(status_testrail_to_rspec(r["status_id"].to_i), nil)
