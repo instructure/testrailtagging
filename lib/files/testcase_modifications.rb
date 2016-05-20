@@ -229,7 +229,8 @@ module TestCaseModifications
   # This will iterate over all the files in the regression_spec folder.
   def self.update_automated_status(dryrun:false)
     test_cases = TestRailOperations.get_test_rail_cases
-    spec_files = Dir["regression_spec/**/*_spec.rb"]
+    regression_files = Dir["regression_spec/**/*_spec.rb"]
+    spec_files = regression_files + Dir["spec/**/*_spec.rb"]
     # For keeping test cases that actually changed
     changed_cases = {}
     # parse all the files looking for examples
