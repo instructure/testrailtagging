@@ -277,7 +277,8 @@ module TestCaseModifications
 
   # checks for duplicate test case ID's in the rspec tests
   def self.check_duplicates
-    spec_files = Dir["regression_spec/**/*_spec.rb"]
+    regression_files = Dir["regression_spec/**/*_spec.rb"]
+    spec_files = regression_files + Dir["spec/**/*_spec.rb"]
     # For keeping a running list of found ID's
     # Key is integer ID
     # Value is the file
