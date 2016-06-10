@@ -65,6 +65,7 @@ module TestRailRSpecIntegration
       # execute. But there is no safe way to append a test case to a test run in a parallel environment.
       # The Testrail API is just too limited.
       puts "Using test run ID: #{@testrail_run_id}"
+      puts "Using test entry ID: #{@testrail_entry_id}"
       @test_case_hash = TestRailOperations.get_test_run_cases(@testrail_run_id)
       # save the test case ID's that were actually executed
       @executed_test_ids = []
@@ -329,6 +330,17 @@ module TestRailRSpecIntegration
       end
     end
 
+    config.add_formatter TestRailRSpecIntegration::TestRailPlanFormatter
+    TestRailRSpecIntegration::TestRailPlanFormatter.set_product(product)
+    if add_formatter
+      TestRailRSpecIntegration.add_formatter_for(config)
+    end
+  end
+
+  # Registers a callback custom formatter to an rspec. The new test run is created from
+  # the results of the tests. This is in effect the opposite of the method above
+  # (register_rspec_integration).
+  def self.add_rspec_callback(config, product, add_formatter: true)
     config.add_formatter TestRailRSpecIntegration::TestRailPlanFormatter
     TestRailRSpecIntegration::TestRailPlanFormatter.set_product(product)
     if add_formatter
