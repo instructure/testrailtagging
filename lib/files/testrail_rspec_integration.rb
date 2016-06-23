@@ -14,6 +14,11 @@ module TestRailRSpecIntegration
   # # This is different from simply creating a stand-alone test run from the results of the test.
   # The tricky part about this is Jenkins run rspecs on multiple processes with different batches of
   # rspec tests.
+  
+  @@total_count = 0
+  @@run_count = 0
+  @@skip_count = 0
+
   class TestRailPlanFormatter
     RSpec::Core::Formatters.register self, :example_passed, :example_pending, :example_failed, :start, :stop
     public
@@ -66,6 +71,11 @@ module TestRailRSpecIntegration
       # The Testrail API is just too limited.
       puts "Using test run ID: #{@testrail_run_id}"
       puts "Using test entry ID: #{@testrail_entry_id}"
+
+      puts "Count of skipped tests: #{TestRailRSpecIntegration.get_skip_count}"
+      puts "Count of tests to be run: #{TestRailRSpecIntegration.get_run_count}"
+      puts "Count of tests that entered filter: #{TestRailRSpecIntegration.get_total_count}"
+
       @test_case_hash = TestRailOperations.get_test_run_cases(@testrail_run_id)
       # save the test case ID's that were actually executed
       @executed_test_ids = []
@@ -168,6 +178,18 @@ module TestRailRSpecIntegration
     def is_for_test_rail_run
       !ENV["TESTRAIL_RUN_ID"].nil? && ENV["TESTRAIL_RUN"].nil? && ENV["TESTRAIL_PLAN_ID"].nil?
     end
+  end
+
+  def self.get_total_count
+    @@total_count
+  end
+
+  def self.get_skip_count
+    @@skip_count
+  end
+
+  def self.get_run_count
+    @@run_count
   end
 
   # Adds a documentation formatter to the rspec if one is not there already.
@@ -274,6 +296,7 @@ module TestRailRSpecIntegration
     # This lambda gets called once for each example
     # Here value is an array of string test case ID's.
     config.filter_run_including test_id: lambda { |id|
+      @@total_count += 1
       id = id.to_i
       # The test id's are integers, and in canvas there is only one ID per test case, NOT an array like Bridge
       in_run = test_run_cases.keys.include?( id )
@@ -283,18 +306,23 @@ module TestRailRSpecIntegration
         test_case = test_run_cases[id]
 
         if (test_case.status == :passed)
+          @@skip_count += 1
           puts "Skipping test case #{id}, because it has already passed"
           return false
         end
 
         if (test_case.status == :pending)
+          @@skip_count += 1
           puts "Skipping test case #{id}, because it is marked pending"
-          false
+          return false
         end
 
-        true # do execute this test
+        @@run_count += 1
+        return true # do execute this test
       else
-        false
+        @@skip_count += 1
+	puts "Skipping test case #{id}, because it was not in test_run_cases"
+        return false
       end
     }
   end
