@@ -250,7 +250,9 @@ module TestRailRSpecIntegration
     # This lambda gets called once for each example
     # Here value is an array of string test case ID's.
     config.filter_run_including testrail_id: lambda { |value|
+      @@total_count += 1
       unless value.is_a? Array
+        @@skip_count += 1
         puts "ERROR! testcase has invalid testrail ID: #{value}. Value should be an array, got: #{value.class}".red
         return false
       end
@@ -276,13 +278,18 @@ module TestRailRSpecIntegration
         all_passed = pass_count == test_ids.count
         all_skipped = skip_count == test_ids.count
         if all_passed
+          @@skip_count += 1
           puts "Skipping test case #{value}, because all tests already passed"
         end
         if all_skipped
+          @@skip_count += 1
           puts "Skipping test case #{value}, because all tests marked pending"
         end
-        pass_count + skip_count != test_ids.count
+        do_execute = (pass_count + skip_count) != test_ids.count
+        @@run_count += 1 if do_execute
+        do_execute
       else
+        @@skip_count += 1
         false
       end
     }
