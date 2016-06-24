@@ -244,7 +244,7 @@ module TestCaseModifications
             tc = test_cases[id]
             if tc
               if file != tc.file
-                puts "\r\nID: #{id}"
+                puts "\r\nID: #{id} - #{tc.title[0,20]}"
                 puts "  Old File: #{tc.file}"
                 puts "  New File: #{file}"
                 tc.file = file
