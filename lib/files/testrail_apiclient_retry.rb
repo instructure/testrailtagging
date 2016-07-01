@@ -19,7 +19,11 @@ module TestRail
       # before you are allowed to submit the next request.
       # http://docs.gurock.com/testrail-api2/introduction #Rate Limit
       response = nil
-      3.times do
+      # todo: use header [Retry-After] secs
+      # for HTTPTooManyRequests 429 error, retry post after either 10s, 30s, 90s or 270s.
+      exponential_backoff_seconds = 10
+
+      4.times do
         begin
           response = send_post(uri, data)
           break
@@ -27,9 +31,9 @@ module TestRail
           if e.message && e.message.match("HTTP 500.*Deadlock")
             sleep 1
           elsif e.message && e.message.match("HTTP 429")
-            retry_seconds = response['Retry-After']
-            puts "TestRail rate limited. retrying in #{retry_seconds}"
-            sleep retry_seconds
+            puts "TestRail rate limited. retrying in #{exponential_backoff_seconds}"
+            sleep exponential_backoff_seconds
+            exponential_backoff_seconds *= 3
           else
             # Don't retry it, let the exception propagate
             raise
