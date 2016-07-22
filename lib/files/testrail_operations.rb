@@ -123,11 +123,12 @@ module TestRailOperations
       if priority_description
         priority_code = priority_description[:user_friendly_priority]
         automated = test_case["custom_automated"]
+        run_once = test_case["custom_run_once"]
         automatable = test_case["custom_to_be_automated"]
         references = test_case["refs"]
         tc = TestCase.new(
           id.to_s, test_case["title"], priority_code, automated,
-          screen_size_description, automatable, references
+          screen_size_description, automatable, references, run_once
         )
         tc.file = test_case["custom_spec_location"]
         test_cases[id] = tc

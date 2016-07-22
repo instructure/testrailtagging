@@ -3,13 +3,13 @@ module TestRailOperations
   # Represents a test case in test rail.
   class TestCase
     attr_accessor :id, :title, :priority, :automated, :screen_size, :result_message, :status
-    attr_accessor :automatable, :references
+    attr_accessor :automatable, :references, :run_once
     attr_accessor :file # Which rspec file the test case is found in
     attr_accessor :metadata, :skip
     attr_accessor :temp_id
     attr_accessor :assigned_to
 
-    def initialize(id, title, priority, automated, screen_size, automatable, references)
+    def initialize(id, title, priority, automated, screen_size, automatable, references, run_once)
       @id          = id
       @title       = title
       @priority    = priority
@@ -17,6 +17,7 @@ module TestRailOperations
       @screen_size = screen_size
       @automatable = automatable
       @references  = references
+      @run_once  = run_once
       @skip = []
     end
 
