@@ -174,6 +174,21 @@ module TestRailOperations
     trclient.send_get(request)
   end
 
+  def self.create_test_plan(name, description = 'created by api', entries = [])
+    request  = "add_plan/#{self.project_id}"
+    data = {
+        "name" => name,
+        "description" => description,
+        "entries"=> entries}
+    get_test_rail_client.send_post(request, data)
+  end
+
+  # new method to create plan entry with runs
+  def self.create_test_plan_entry_with_runs(plan_id, data)
+    request  = "add_plan_entry/#{plan_id}"
+    get_test_rail_client.send_post(request, data)
+  end
+
   # Adds one test run to a test plan
   # Returns hash containing:
   # 1. The test run ID of the test run.
