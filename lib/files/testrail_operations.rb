@@ -316,7 +316,7 @@ module TestRailOperations
       tc = TestCase.new(
         permanent_id, r["title"], r["priority_id"].to_i,
         r["custom_automated"], r["custom_screen_size"].to_i,
-        r["custom_to_be_automated"], r["refs"]
+        r["custom_to_be_automated"], r["refs"], r["custom_run_once"]
       )
       tc.temp_id = r["id"].to_i
       tc.assigned_to = r["assignedto_id"].to_i
