@@ -227,12 +227,13 @@ module TestCaseModifications
   # For example, if an rspec test example has a testrail_id of 123123 in file foo_spec.rb, it will update the test
   # case on test rail and update the spec location field with foo_spec.rb.
   # This will iterate over all the files in the regression_spec folder.
-  def self.update_automated_status(dryrun:false)
-    test_cases = TestRailOperations.get_test_rail_cases
+  def self.update_automated_status(suite_ids, dryrun:false)
+    test_cases = TestRailOperations.get_test_rail_cases_for_all_suites(suite_ids)
     regression_files = Dir["regression_spec/**/*_spec.rb"]
     spec_files = regression_files + Dir["spec/**/*_spec.rb"]
     # For keeping test cases that actually changed
     changed_cases = {}
+    orphaned_ids_count = 0
     # parse all the files looking for examples
     spec_files.each do |file|
       # puts "Rspec file: #{file}"
@@ -257,13 +258,16 @@ module TestCaseModifications
                 tc.automated = true
                 changed_cases[id] = tc
               end
+            else
+              puts "Test CaseID: #{id} not found in any testrail suite for project: #{TestRailOperations.project_id}"
+              orphaned_ids_count += 1
             end
           end
         end
       end
     end
 
-    puts "\nTest Cases that will get modified"
+    puts "\nTest Cases that will get modified" if changed_cases.count > 0
     trclient = TestRailOperations.get_test_rail_client
     changed_cases.each do |id_key, tc_val|
       puts "Test Case: id: #{id_key}, #{tc_val.file}" if tc_val.file
@@ -273,6 +277,7 @@ module TestCaseModifications
         trclient.send_post_retry(url, data)
       end
     end
+    puts "Number of orphaned testcase IDs: #{orphaned_ids_count}"
   end
 
   # checks for duplicate test case ID's in the rspec tests

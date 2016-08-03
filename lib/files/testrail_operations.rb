@@ -105,14 +105,15 @@ module TestRailOperations
   # The Values are the instance of TestCase.
   # Each TestCase instance corresponds to a test case in test rail.
   # return - A hash of TestCase instances
-  def self.get_test_rail_cases
+  def self.get_test_rail_cases(suite_id = nil)
     trclient        = get_test_rail_client
     screen_sizes    = get_test_rail_screen_size_codes
     priorities      = get_test_rail_priority_codes
     test_cases      = {}
 
     # retrieve test cases
-    testcases_url = "get_cases/#{self.project_id}&suite_id=#{self.suite_id}"
+    id_suite = suite_id ? suite_id : self.suite_id
+    testcases_url = "get_cases/#{self.project_id}&suite_id=#{id_suite}"
     response = trclient.send_get(testcases_url)
     response.each do |test_case|
       id = test_case["id"]
@@ -136,6 +137,16 @@ module TestRailOperations
     end
 
     test_cases
+  end
+
+  # Gets all the test cases for all the suites that we have for Bridge in Testrail
+  # suite_ids - An array of integers for each test suite under a testrail project
+  def self.get_test_rail_cases_for_all_suites(suite_ids)
+    result = {}
+    suite_ids.each do |id|
+      result.merge!(get_test_rail_cases(id))
+    end
+    result
   end
 
   # Updates a testcase that corresponds to the provided
