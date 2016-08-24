@@ -280,6 +280,42 @@ module TestCaseModifications
     puts "Number of orphaned testcase IDs: #{orphaned_ids_count}"
   end
 
+  # Inspects all request specs and checks if their associated testcase is marked as
+  # run once on testrail. If they are not, then the testcases on testrail get
+  # marked as run once
+  def self.update_run_once(suite_ids)
+    test_cases = TestRailOperations.get_test_rail_cases_for_all_suites(suite_ids)
+    spec_files = Dir["spec/**/*_spec.rb"].reject { |f| f.include? "spec/features/" }
+
+    request_specs = []
+    # parse all the files looking for examples
+    spec_files.each do |file|
+      # puts "Rspec file: #{file}"
+      File.open(file).each do |line|
+        if line.match("testrail_id")
+          testrail_ids = get_example_testrail_ids(line)
+          testrail_ids.each do |id|
+            # puts "      id: #{id}"
+            tc = test_cases[id]
+            if tc && tc.file
+              unless tc.run_once
+                request_specs << tc
+              end
+            end
+          end
+        end
+      end
+    end
+
+    trclient = TestRailOperations.get_test_rail_client
+    request_specs.each do |tc|
+      puts "Marking Test Case as run_once: #{tc.id}"
+      url = "update_case/#{tc.id}"
+      data = { "custom_run_once" => true }
+      trclient.send_post_retry(url, data)
+    end
+  end
+
   # checks for duplicate test case ID's in the rspec tests
   def self.check_duplicates
     regression_files = Dir["regression_spec/**/*_spec.rb"]
