@@ -242,7 +242,7 @@ module TestCaseModifications
           testrail_ids = get_example_testrail_ids(line)
           testrail_ids.each do |id|
             # puts "      id: #{id}"
-            tc = test_cases[id]
+            tc = test_cases.delete(id)
             if tc
               if file != tc.file
                 puts "\r\nID: #{id} - #{tc.title[0,20]}"
@@ -266,6 +266,9 @@ module TestCaseModifications
         end
       end
     end
+
+    # remaining testcases should be unautomated, ensure they are
+    check_unautomated(test_cases, changed_cases)
 
     puts "\nTest Cases that will get modified" if changed_cases.count > 0
     trclient = TestRailOperations.get_test_rail_client
@@ -428,6 +431,33 @@ module TestCaseModifications
         browser_skips = browsers_to_testrail(tc_val.skip)
         data = { "custom_spec_location" => tc_val.file, "custom_browser_skip" => browser_skips, "custom_automated" => true }
         trclient.send_post_retry(url, data)
+      end
+    end
+  end
+
+  private
+
+  def self.check_unautomated(testcases, changed_cases)
+    testcases.each do |id, testcase|
+      if testcase.automated || !testcase.file.empty?
+        testcase.automated = false
+
+        unless testcase.file.empty?
+          regex = /testrail_id:(.*)(\[|\s)#{testcase.id}(\]|\s)/
+
+          begin
+            if File.foreach(testcase.file).grep(regex).empty?
+              testcase.file = ""
+            else
+              testcase.automated = true # should only ever hit this if #update_automated_status doesn't work correctly
+            end
+          rescue Errno::ENOENT
+            puts "No such file or directory: #{testcase.file}"
+            testcase.file = ""
+          end
+        end
+
+        changed_cases[id] = testcase
       end
     end
   end
