@@ -245,12 +245,16 @@ module TestCaseModifications
             tc = test_cases[id]
             if tc
               if file != tc.file
-                puts "\r\nID: #{id} - #{tc.title[0,20]}"
+                puts "\r\nID: #{id} - #{tc.title[0,50]}#{(tc.title.length > 50) ? '...' : ''}}"
                 puts "  Old File: #{tc.file}"
                 puts "  New File: #{file}"
                 tc.file = file
                 changed_cases[id] = tc
               end
+
+              # if the current testcase is marked run once, leave it. otherwise, mark it as
+              # run once if the file it is found to be in is a request spec
+              tc.run_once ||= (file =~ /^spec\/requests\/.*_spec\.rb$/i).nil? ? false : true
 
               # assuming it never becomes un-automated
               unless tc.automated
@@ -272,7 +276,10 @@ module TestCaseModifications
     changed_cases.each do |id_key, tc_val|
       puts "Test Case: id: #{id_key}, #{tc_val.file}" if tc_val.file
       url = "update_case/#{id_key}"
-      data = { "custom_spec_location" => tc_val.file, "custom_automated" => tc_val.automated }
+      data = { "custom_spec_location" => tc_val.file,
+               "custom_automated" => tc_val.automated,
+               "custom_run_once" => tc_val.run_once
+             }
       unless dryrun
         trclient.send_post_retry(url, data)
       end
