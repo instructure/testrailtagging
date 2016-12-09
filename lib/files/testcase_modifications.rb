@@ -446,10 +446,11 @@ module TestCaseModifications
 
   def self.check_unautomated(testcases, changed_cases)
     testcases.each do |id, testcase|
-      if testcase.automated || !testcase.file.empty?
+      # if the testcase is marked as automated or has a spec location
+      if testcase.automated || !!testcase.file
         testcase.automated = false
 
-        unless testcase.file.empty?
+        if !!testcase.file
           regex = /testrail_id:(.*)(\[|\s)#{testcase.id}(\]|\s)/
 
           begin
