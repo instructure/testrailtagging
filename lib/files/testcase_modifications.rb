@@ -279,7 +279,7 @@ module TestCaseModifications
       puts "\nTest Cases that will get modified"
       trclient = TestRailOperations.get_test_rail_client
       changed_cases.each do |id_key, tc_val|
-        puts "Test Case: id: #{id_key}, #{tc_val.file}" if tc_val.file
+        puts "\t#{id_key} -> " + (!!tc_val.file ? tc_val.file : "no spec location")
         url = "update_case/#{id_key}"
         data = { "custom_spec_location" => tc_val.file,
                  "custom_automated" => tc_val.automated,
@@ -454,21 +454,27 @@ module TestCaseModifications
     testcases.each do |id, testcase|
       # if the testcase is marked as automated or has a spec location
       if testcase.automated || !!testcase.file
+        puts "Test Case #{id} is out of sync /o\\"
         testcase.automated = false
 
         if !!testcase.file
+          puts "\tspec location is not nil"
           regex = /testrail_id:(.*)(\[|\s)#{testcase.id}(\]|\s)/
 
           begin
             if File.foreach(testcase.file).grep(regex).empty?
-              testcase.file = ""
+              puts "\t\tmarking spec location as nil"
+              testcase.file = nil
             else
+              puts "\t\tmarking as automated"
               testcase.automated = true # should only ever hit this if #update_automated_status doesn't work correctly
             end
           rescue Errno::ENOENT
-            puts "No such file or directory: #{testcase.file}"
-            testcase.file = ""
+            puts "\t\tNo such file or directory: #{testcase.file}"
+            testcase.file = nil
           end
+        else
+          puts "\tmarked as automated"
         end
 
         changed_cases[id] = testcase
