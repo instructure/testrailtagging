@@ -245,7 +245,7 @@ module TestCaseModifications
             tc = test_cases.delete(id)
             if tc
               if file != tc.file
-                puts "\r\nID: #{id} - #{tc.title[0,50]}#{(tc.title.length > 50) ? '...' : ''}}"
+                puts "\r\nID: #{id} - #{tc.title[0,50]}#{(tc.title.length > 50) ? '...' : ''}"
                 puts "  Old File: #{tc.file}"
                 puts "  New File: #{file}"
                 tc.file = file
@@ -274,20 +274,26 @@ module TestCaseModifications
     # remaining testcases should be unautomated, ensure they are
     check_unautomated(test_cases, changed_cases)
 
-    puts "\nTest Cases that will get modified" if changed_cases.count > 0
-    trclient = TestRailOperations.get_test_rail_client
-    changed_cases.each do |id_key, tc_val|
-      puts "Test Case: id: #{id_key}, #{tc_val.file}" if tc_val.file
-      url = "update_case/#{id_key}"
-      data = { "custom_spec_location" => tc_val.file,
-               "custom_automated" => tc_val.automated,
-               "custom_run_once" => tc_val.run_once
-             }
-      unless dryrun
-        trclient.send_post_retry(url, data)
+    # update testrail if needed
+    if changed_cases.count > 0
+      puts "\nTest Cases that will get modified"
+      trclient = TestRailOperations.get_test_rail_client
+      changed_cases.each do |id_key, tc_val|
+        puts "Test Case: id: #{id_key}, #{tc_val.file}" if tc_val.file
+        url = "update_case/#{id_key}"
+        data = { "custom_spec_location" => tc_val.file,
+                 "custom_automated" => tc_val.automated,
+                 "custom_run_once" => tc_val.run_once
+               }
+        unless dryrun
+          trclient.send_post_retry(url, data)
+        end
       end
+    else
+      puts "Nothing to update \\o/"
     end
-    puts "Number of orphaned testcase IDs: #{orphaned_ids_count}"
+
+    puts "Number of orphaned testcase IDs: #{orphaned_ids_count}" unless orphaned_ids_count.zero?
   end
 
   # Inspects all request specs and checks if their associated testcase is marked as
