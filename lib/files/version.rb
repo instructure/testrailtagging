@@ -1,3 +1,3 @@
 module Testrailtagging
-  VERSION = "0.3.8.2"
+  VERSION = "0.3.8.3"
 end
