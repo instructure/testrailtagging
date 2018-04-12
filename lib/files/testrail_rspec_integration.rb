@@ -22,12 +22,18 @@ module TestRailRSpecIntegration
   class TestRailPlanFormatter
     RSpec::Core::Formatters.register self, :example_passed, :example_pending, :example_failed, :start, :stop
     public
+    @@cases = []
+
     def initialize(out)
       @out = out
     end
 
     def self.set_product(product)
       @@product = product
+    end
+
+    def set_test_run_id(run_id)
+      @@run_id = run_id
     end
 
     def test_id_key
@@ -66,6 +72,14 @@ module TestRailRSpecIntegration
         end
       end
 
+      # Initialize the batch size for test rail batching based on environment variable.
+      # One test is the default, in case people don't want to batch or haven't provided the variable.
+      if !ENV["TESTRAIL_BATCH_SIZE"].nil?
+        @batch_size = ENV["TESTRAIL_BATCH_SIZE"]
+      else
+        @batch_size = 1
+      end
+
       # Pull down ALL the test cases from testrail. Granted this is more than what rspec will actually
       # execute. But there is no safe way to append a test case to a test run in a parallel environment.
       # The Testrail API is just too limited.
@@ -76,9 +90,14 @@ module TestRailRSpecIntegration
       puts "Count of tests to be run: #{TestRailRSpecIntegration.get_run_count}"
       puts "Count of tests that entered filter: #{TestRailRSpecIntegration.get_total_count}"
 
+      puts "Batching test results in groups of #{@batch_size}"
       @test_case_hash = TestRailOperations.get_test_run_cases(@testrail_run_id)
       # save the test case ID's that were actually executed
       @executed_test_ids = []
+
+      # Need a class variable for after suite hooks to post results,
+      # since the after suite hooks are defined outside the class
+      set_test_run_id(@testrail_run_id)
     end
 
     # This gets called after all tests are run
@@ -108,8 +127,8 @@ module TestRailRSpecIntegration
       return unless active
       example = notification.example
       result = example.execution_result
-
       testrail_ids = example.metadata[test_id_key]
+
       return unless testrail_ids.present?
       completion_message = ""
 
@@ -120,21 +139,28 @@ module TestRailRSpecIntegration
         completion_message.gsub!(/\[(\d)+m/, '')
       end
 
-      cases = [] # the test cases
       Array(testrail_ids).each do |id|
         tc = @test_case_hash[id.to_i]
         next unless tc # A test case ID exists in the rspec file, but not on testrail
         tc.set_status(result.status, completion_message)
-        cases << tc
+        @@cases << tc
         @executed_test_ids << id.to_i
       end
 
-      post_results cases
+      # Batches together test cases before posting. Relies on environment variable TESTRAIL_BATCH_SIZE to determine
+      # batch size.
+      # Relies on an 'after suite' hook to capture and post results for any number of remaining test cases less
+      # than the batch size
+      if @@cases.size >= @batch_size.to_i
+        TestRailPlanFormatter.post_results @@cases
+        @@cases.clear
+      end
     end
 
     # test_cases is an array of TestCase instances
-    def post_results(test_cases)
+    def self.post_results(test_cases)
       data = []
+
       test_cases.each do |tc|
 
         status_value = TestRailOperations.status_rspec_to_testrail(tc.status)
@@ -156,11 +182,11 @@ module TestRailRSpecIntegration
       end
 
       if data.size > 0
-        TestRailOperations.post_run_results(@testrail_run_id, data)
+        TestRailOperations.post_run_results(@@run_id, data)
         test_case_ids = test_cases.collect { |tc| tc.id }
-        @out.puts "Successfully posted results for testcases: #{test_case_ids} to test run: #{@testrail_run_id}"
+        puts "Successfully posted results for testcases: #{test_case_ids} to test run: #{@@run_id}"
       else
-        @out.puts "No results sent to test rail"
+        puts "No results sent to test rail"
       end
     end
 
@@ -169,6 +195,7 @@ module TestRailRSpecIntegration
     alias_method :example_failed, :example_finished
 
     private
+
     # For pushing results up to a test plan in TestRail.
     def is_for_test_rail_plan
       !ENV["TESTRAIL_RUN"].nil? && !ENV["TESTRAIL_PLAN_ID"].nil? && !ENV["TESTRAIL_ENTRY_ID"].nil? && !ENV["TESTRAIL_ENTRY_RUN_ID"].nil?
@@ -369,6 +396,15 @@ module TestRailRSpecIntegration
     TestRailRSpecIntegration::TestRailPlanFormatter.set_product(product)
     if add_formatter
       TestRailRSpecIntegration.add_formatter_for(config)
+    end
+
+    # Captures and posts results for any remaining test case results in @@cases that don't fill a full batch
+    config.after(:suite) do |suite|
+      total_cases = TestRailPlanFormatter.class_variable_get(:@@cases)
+
+      if total_cases.size > 0
+        TestRailRSpecIntegration::TestRailPlanFormatter.post_results total_cases
+      end
     end
   end
 

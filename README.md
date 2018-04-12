@@ -46,6 +46,14 @@ Then you set an environment variable called TESTRAIL_RUN_ID, with that value. Fo
 
 `export TESTRAIL_RUN_ID=14153`
 
+You can also set an optional environment variable to report results in batches, rather than after each test 
+case.
+This helps reduce traffic to Testrail and also provides less flakiness in results not being posted when
+something slow down testrail. To do this, add the following variable and set it to whatever number of test
+case results you'd like to have posted at a time:
+
+`TESTRAIL_BATCH_SIZE=15`
+
 Next, in your RSpec configuration file (usually spec_helper.rb) you need to call a registration function: 
 
 
