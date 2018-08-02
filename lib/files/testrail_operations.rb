@@ -1,5 +1,6 @@
 require_relative "testrail_apiclient_retry"
 require_relative "TestCase"
+require "date"
 
 # =================================================================================
 #
@@ -300,6 +301,24 @@ module TestRailOperations
     trclient = get_test_rail_client
     uri = "add_results/#{run_id}"
     trclient.send_post_retry(uri, "results" => data)
+  end
+
+  # For a given test plan deletes all runs equal to or older than the days passed
+  # Note that testrail stores runs as an entry and requires the entry id to remove the run
+  # To delete closer than 7 days, pass in force_delete = true
+  def self.delete_plan_entry(plan_id, days, force_delete = false)
+    if days >= 7 || force_delete == true
+      clean_date = (Date.today - days).to_time.to_i
+      trclient = get_test_rail_client
+      request = "get_plan/#{plan_id}"
+      response = trclient.send_get(request)
+      response["entries"].each do |entry|
+        if entry["runs"][0]["created_on"] <= clean_date
+          uri = "delete_plan_entry/#{plan_id}/#{entry["id"]}"
+          trclient.send_post_retry(uri, "")
+        end
+      end
+    end
   end
 
   # When a test run is created, the test cases have new, sort of temporary ID's.

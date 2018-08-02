@@ -80,6 +80,12 @@ module TestRailRSpecIntegration
         @batch_size = 1
       end
 
+      # Initialize the number of cleanup days for test rail runs based on environment variable.
+      # Unless force_delete = true is passed the minimum is 7 days.
+      if !ENV["TESTRAIL_RUN_DELETE_DAYS"].nil? && !@testrail_plan_id.nil?
+        TestRailOperations.delete_plan_entry(@testrail_plan_id, ENV["TESTRAIL_RUN_DELETE_DAYS"].to_f, ENV["TESTRAIL_RUN_DELETE_FORCE"])
+      end
+
       # Pull down ALL the test cases from testrail. Granted this is more than what rspec will actually
       # execute. But there is no safe way to append a test case to a test run in a parallel environment.
       # The Testrail API is just too limited.

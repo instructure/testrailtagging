@@ -34,6 +34,8 @@ module TestRail
             puts "TestRail rate limited. retrying in #{exponential_backoff_seconds}"
             sleep exponential_backoff_seconds
             exponential_backoff_seconds *= 3
+          elsif e.message && e.message.match("Net::OpenTimeout")
+            sleep 1
           else
             # Don't retry it, let the exception propagate
             raise

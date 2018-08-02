@@ -32,6 +32,11 @@ Hence to do anything with this gem you will need to set the following environmen
 `TESTRAIL_PASSWORD`
 
 which this gem will look for and use.
+
+`TESTRAIL_RUN_DELETE_DAYS`
+`TESTRAIL_RUN_DELETE_FORCE`
+With RUN_DELETE_DAYS defined the gem will delete all test runs in the provided plan_id that are older than
+the days specified.  There is a limit of 7 days which can be overridden with RUN_DELETE_FORCE set to true.
  
 ### For Reporting results to testrail
 
