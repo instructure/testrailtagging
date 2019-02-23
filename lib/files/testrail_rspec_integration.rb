@@ -14,7 +14,7 @@ module TestRailRSpecIntegration
   # # This is different from simply creating a stand-alone test run from the results of the test.
   # The tricky part about this is Jenkins run rspecs on multiple processes with different batches of
   # rspec tests.
-  
+
   @@total_count = 0
   @@run_count = 0
   @@skip_count = 0
@@ -43,6 +43,10 @@ module TestRailRSpecIntegration
         when :canvas
           :test_id
       end
+    end
+
+    def output
+      :testrailtagging
     end
 
     # Gets whether the formatter is active or not.
