@@ -33,7 +33,7 @@ module TestRailOperations
   # Gets the Test Rail client
   # http://docs.gurock.com/testrail-api2/bindings-ruby
   def self.get_test_rail_client
-    url = "https://canvas.testrail.com"
+    url = ENV["TESTRAIL_URL"] || "https://canvas.testrail.com"
     trclient = TestRail::APIClient.new(url)
     trclient.user = ENV["TESTRAIL_USER"]
     trclient.password = ENV["TESTRAIL_PASSWORD"]
