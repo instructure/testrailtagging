@@ -139,7 +139,8 @@ module TestRailRSpecIntegration
       result = example.execution_result
       testrail_ids = example.metadata[test_id_key]
 
-      return unless testrail_ids.present?
+      return if testrail_ids.empty?
+
       completion_message = ""
 
       if (result.status == :failed)
